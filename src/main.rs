@@ -5,27 +5,16 @@ use std::mem::{size_of, transmute};
 
 #[repr(C)]
 struct Class {
-    magic: [u8; 4],
-    minor_version: [u8; 2],
-    major_version: [u8; 2],
+    magic: u32,
+    minor_version: u16,
+    major_version: u16,
 }
 
 impl fmt::Display for Class {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "magic: ")?;
-        for b in self.magic.iter() {
-            write!(f, "{:x}", b)?;
-        }
-        writeln!(f)?;
-        write!(f, "minor_version: ")?;
-        for b in self.minor_version.iter() {
-            write!(f, "{}", b)?;
-        }
-        writeln!(f)?;
-        write!(f, "major_version: ")?;
-        for b in self.major_version.iter() {
-            write!(f, "{}", b)?;
-        }
+        writeln!(f, "magic: {:x}", self.magic)?;
+        writeln!(f, "minor_version: {}", self.minor_version)?;
+        writeln!(f, "major_version: {}", self.major_version)?;
         Ok(())
     }
 }
