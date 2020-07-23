@@ -7,7 +7,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 
 use constant_pool::ConstantPool;
 
-pub type ResultReader<T> = Result<(T, Cursor<Vec<u8>>), Box<dyn std::error::Error>>;
+pub type ReaderResult<T> = Result<(T, Cursor<Vec<u8>>), Box<dyn std::error::Error>>;
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html
 #[repr(C)]
@@ -28,7 +28,7 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(mut rdr: Cursor<Vec<u8>>) -> ResultReader<Self> {
+    pub fn new(mut rdr: Cursor<Vec<u8>>) -> ReaderResult<Self> {
         let magic = rdr.read_u32::<BigEndian>()?;
         let minor_version = rdr.read_u16::<BigEndian>()?;
         let major_version = rdr.read_u16::<BigEndian>()?;

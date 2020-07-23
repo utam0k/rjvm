@@ -13,7 +13,7 @@ use std::io::Cursor;
 use byteorder::ReadBytesExt;
 use num_traits::FromPrimitive;
 
-use crate::class::ResultReader;
+use crate::class::ReaderResult;
 use class_info::ClassInfo;
 use fieldref_info::FieldrefInfo;
 use interface_methodref_info::InterfaceMethodrefInfo;
@@ -31,7 +31,7 @@ pub struct ConstantPool {
 }
 
 impl ConstantPool {
-    pub fn new(mut rdr: Cursor<Vec<u8>>) -> ResultReader<Self> {
+    pub fn new(mut rdr: Cursor<Vec<u8>>) -> ReaderResult<Self> {
         let tag_number = rdr.read_u8()?;
         let tag = FromPrimitive::from_u8(tag_number)
             .ok_or_else(|| NotFoundConstantTagError::new(tag_number))?;
@@ -73,7 +73,7 @@ impl fmt::Display for ConstantPoolInfo {
 }
 
 impl ConstantPoolInfo {
-    pub fn new(tag: &ConstantTag, rdr: Cursor<Vec<u8>>) -> ResultReader<Self> {
+    pub fn new(tag: &ConstantTag, rdr: Cursor<Vec<u8>>) -> ReaderResult<Self> {
         Ok(match tag {
             ConstantTag::Class => {
                 let (info, rdr) = ClassInfo::new(rdr)?;

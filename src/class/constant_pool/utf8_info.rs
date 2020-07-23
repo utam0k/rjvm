@@ -3,7 +3,7 @@ use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
-use crate::class::ResultReader;
+use crate::class::ReaderResult;
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4.7
 #[repr(C)]
@@ -13,7 +13,7 @@ pub struct Utf8Info {
 }
 
 impl Utf8Info {
-    pub fn new(mut rdr: Cursor<Vec<u8>>) -> ResultReader<Self> {
+    pub fn new(mut rdr: Cursor<Vec<u8>>) -> ReaderResult<Self> {
         let length = rdr.read_u16::<BigEndian>()?;
         let (bytes, rdr) = (0..length).try_fold((Vec::new(), rdr), |(mut ret, mut rdr), _i| {
             match rdr.read_u8() {
