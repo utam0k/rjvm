@@ -7,6 +7,7 @@ use crate::class::ReaderResult;
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4.1
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct ClassInfo {
     name_index: u16,
 }

@@ -23,7 +23,7 @@ impl fmt::Display for NotFoundConstantTagError {
 }
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4
-#[derive(FromPrimitive)]
+#[derive(Clone, Copy, FromPrimitive, PartialEq)]
 pub enum ConstantTag {
     Class = 7,
     Fieldref = 9,

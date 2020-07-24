@@ -4,8 +4,8 @@ mod interface_methodref_info;
 mod methodref_info;
 mod name_and_type_info;
 mod string_info;
-mod tag;
-mod utf8_info;
+pub mod tag;
+pub mod utf8_info;
 
 use std::fmt;
 use std::io::Cursor;
@@ -25,9 +25,10 @@ use utf8_info::Utf8Info;
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4
 #[repr(C)]
+#[derive(Clone)]
 pub struct ConstantPool {
-    tag: ConstantTag,
-    info: ConstantPoolInfo,
+    pub tag: ConstantTag,
+    pub info: ConstantPoolInfo,
 }
 
 impl ConstantPool {
@@ -47,6 +48,7 @@ impl fmt::Display for ConstantPool {
     }
 }
 
+#[derive(Clone)]
 pub enum ConstantPoolInfo {
     ClassInfo(ClassInfo),
     FieldrefInfo(FieldrefInfo),

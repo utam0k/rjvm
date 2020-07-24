@@ -7,6 +7,7 @@ use crate::class::ReaderResult;
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4.7
 #[repr(C)]
+#[derive(Clone)]
 pub struct Utf8Info {
     length: u16,
     bytes: Vec<u8>,
@@ -31,7 +32,15 @@ impl Utf8Info {
 impl fmt::Display for Utf8Info {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let string = std::str::from_utf8(&self.bytes).unwrap();
-        write!(f, "Utf8     \t {}", string)?;
+        write!(f, "{}", string)?;
+        Ok(())
+    }
+}
+
+impl fmt::Debug for Utf8Info {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let string = std::str::from_utf8(&self.bytes).unwrap();
+        write!(f, "{}", string)?;
         Ok(())
     }
 }

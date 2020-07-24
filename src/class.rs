@@ -1,4 +1,7 @@
+mod attribute;
 mod constant_pool;
+mod constant_pool_table;
+mod method;
 
 use std::fmt;
 use std::io::Cursor;
@@ -6,6 +9,8 @@ use std::io::Cursor;
 use byteorder::{BigEndian, ReadBytesExt};
 
 use constant_pool::ConstantPool;
+use constant_pool_table::ConstantPoolTable;
+use method::MethodInfo;
 
 pub type ReaderResult<T> = Result<(T, Cursor<Vec<u8>>), Box<dyn std::error::Error>>;
 
@@ -16,7 +21,7 @@ pub struct Class {
     minor_version: u16,
     major_version: u16,
     constant_pool_count: u16,
-    cp_info: Vec<ConstantPool>,
+    cp_info: ConstantPoolTable,
     access_flags: u16,
     this_class: u16,
     super_class: u16,
@@ -25,6 +30,9 @@ pub struct Class {
     field_count: u16,
     field_info: Vec<u8>,
     method_count: u16,
+    methods: Vec<MethodInfo>,
+    attributes_count: u16,
+    attribute_info: Vec<u8>,
 }
 
 impl Class {
@@ -33,16 +41,18 @@ impl Class {
         let minor_version = rdr.read_u16::<BigEndian>()?;
         let major_version = rdr.read_u16::<BigEndian>()?;
         let constant_pool_count = rdr.read_u16::<BigEndian>()?;
-        let (cp_info, mut rdr) =
-            (0..constant_pool_count - 1).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
-                match ConstantPool::new(rdr) {
-                    Ok((constant_pool, rdr2)) => {
-                        ret.push(constant_pool);
-                        Ok((ret, rdr2))
-                    }
-                    Err(err) => Err(err),
+        let (cp_info, mut rdr) = (0..constant_pool_count - 1).try_fold(
+            (ConstantPoolTable::new(), rdr),
+            |(mut cp_table, rdr), _i| match ConstantPool::new(rdr) {
+                Ok((constant_pool, rdr2)) => {
+                    cp_table.push(constant_pool);
+                    Ok((cp_table, rdr2))
                 }
-            })?;
+                Err(err) => Err(err),
+            },
+        )?;
+
+        let utf8_table = cp_info.utf8info();
 
         let access_flags = rdr.read_u16::<BigEndian>()?;
         let this_class = rdr.read_u16::<BigEndian>()?;
@@ -55,6 +65,19 @@ impl Class {
         let field_info = Vec::new(); // TODO: unimplemented!
 
         let method_count = rdr.read_u16::<BigEndian>()?;
+        let (methods, mut rdr) =
+            (0..method_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
+                match MethodInfo::new(rdr, &utf8_table) {
+                    Ok((method_info, rdr2)) => {
+                        ret.push(method_info);
+                        Ok((ret, rdr2))
+                    }
+                    Err(err) => Err(err),
+                }
+            })?;
+
+        let attributes_count = rdr.read_u16::<BigEndian>()?;
+        let attribute_info = Vec::new(); // TODO: unimplemented!
 
         Ok((
             Self {
@@ -71,13 +94,16 @@ impl Class {
                 field_count,
                 field_info,
                 method_count,
+                methods,
+                attributes_count,
+                attribute_info,
             },
             rdr,
         ))
     }
 }
 
-impl fmt::Display for Class {
+impl fmt::Debug for Class {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Class")?;
         writeln!(f, "\t magic: {:x}", self.magic)?;
@@ -93,7 +119,11 @@ impl fmt::Display for Class {
         writeln!(f, "Field")?;
         writeln!(f, "\t field_count: {}", self.field_count)?;
         writeln!(f, "Method")?;
-        writeln!(f, "\t method_count: {}", self.method_count)?;
+        for method in &self.methods {
+            writeln!(f, "{}", method)?;
+        }
+        writeln!(f, "Attribute")?;
+        writeln!(f, "\t attributes_count: {}", self.field_count)?;
         Ok(())
     }
 }

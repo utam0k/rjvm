@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (class, _rdr) = Class::new(rdr)?;
 
-    println!("{}", class);
+    println!("{:?}", class);
 
     Ok(())
 }
