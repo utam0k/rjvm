@@ -56,16 +56,15 @@ impl MethodInfo {
             .ok_or_else(|| NotFoundUtf8::new(descriptor_index, utf8_table.clone()))?
             .to_string();
         let attributes_count = rdr.read_u16::<BigEndian>()?;
-        let (attribute_info, rdr) =
-            (0..attributes_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
-                match Attribute::new(rdr, &utf8_table) {
-                    Ok((ai, rdr2)) => {
-                        ret.push(ai);
-                        Ok((ret, rdr2))
-                    }
-                    Err(err) => Err(err),
+        let (attribute_info, rdr) = (0..attributes_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
+            match Attribute::new(rdr, &utf8_table) {
+                Ok((ai, rdr2)) => {
+                    ret.push(ai);
+                    Ok((ret, rdr2))
                 }
-            })?;
+                Err(err) => Err(err),
+            }
+        })?;
 
         Ok((
             Self {

@@ -29,11 +29,7 @@ impl NameAndTypeInfo {
 
 impl fmt::Display for NameAndTypeInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "NameAndTyp\t #{}:#{}",
-            self.name_index, self.descriptor_index
-        )?;
+        write!(f, "NameAndTyp\t #{}:#{}", self.name_index, self.descriptor_index)?;
         Ok(())
     }
 }

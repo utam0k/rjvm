@@ -16,14 +16,12 @@ pub struct Utf8Info {
 impl Utf8Info {
     pub fn new(mut rdr: Cursor<Vec<u8>>) -> ReaderResult<Self> {
         let length = rdr.read_u16::<BigEndian>()?;
-        let (bytes, rdr) = (0..length).try_fold((Vec::new(), rdr), |(mut ret, mut rdr), _i| {
-            match rdr.read_u8() {
-                Ok(ch) => {
-                    ret.push(ch);
-                    Ok((ret, rdr))
-                }
-                Err(err) => Err(err),
+        let (bytes, rdr) = (0..length).try_fold((Vec::new(), rdr), |(mut ret, mut rdr), _i| match rdr.read_u8() {
+            Ok(ch) => {
+                ret.push(ch);
+                Ok((ret, rdr))
             }
+            Err(err) => Err(err),
         })?;
         Ok((Self { length, bytes }, rdr))
     }

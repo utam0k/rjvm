@@ -34,8 +34,7 @@ pub struct ConstantPool {
 impl ConstantPool {
     pub fn new(mut rdr: Cursor<Vec<u8>>) -> ReaderResult<Self> {
         let tag_number = rdr.read_u8()?;
-        let tag = FromPrimitive::from_u8(tag_number)
-            .ok_or_else(|| NotFoundConstantTagError::new(tag_number))?;
+        let tag = FromPrimitive::from_u8(tag_number).ok_or_else(|| NotFoundConstantTagError::new(tag_number))?;
         let (info, rdr) = ConstantPoolInfo::new(&tag, rdr)?;
         Ok((ConstantPool { tag, info }, rdr))
     }

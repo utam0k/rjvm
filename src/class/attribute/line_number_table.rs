@@ -16,23 +16,13 @@ impl LineNumber {
         let start_pc = rdr.read_u16::<BigEndian>()?;
         let line_number = rdr.read_u16::<BigEndian>()?;
 
-        Ok((
-            Self {
-                start_pc,
-                line_number,
-            },
-            rdr,
-        ))
+        Ok((Self { start_pc, line_number }, rdr))
     }
 }
 
 impl fmt::Debug for LineNumber {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "start_pc: {}, line_number: {}",
-            self.start_pc, self.line_number
-        )?;
+        write!(f, "start_pc: {}, line_number: {}", self.start_pc, self.line_number)?;
         Ok(())
     }
 }

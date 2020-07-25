@@ -41,16 +41,16 @@ impl Class {
         let minor_version = rdr.read_u16::<BigEndian>()?;
         let major_version = rdr.read_u16::<BigEndian>()?;
         let constant_pool_count = rdr.read_u16::<BigEndian>()?;
-        let (cp_info, mut rdr) = (0..constant_pool_count - 1).try_fold(
-            (ConstantPoolTable::new(), rdr),
-            |(mut cp_table, rdr), _i| match ConstantPool::new(rdr) {
-                Ok((constant_pool, rdr2)) => {
-                    cp_table.push(constant_pool);
-                    Ok((cp_table, rdr2))
+        let (cp_info, mut rdr) =
+            (0..constant_pool_count - 1).try_fold((ConstantPoolTable::new(), rdr), |(mut cp_table, rdr), _i| {
+                match ConstantPool::new(rdr) {
+                    Ok((constant_pool, rdr2)) => {
+                        cp_table.push(constant_pool);
+                        Ok((cp_table, rdr2))
+                    }
+                    Err(err) => Err(err),
                 }
-                Err(err) => Err(err),
-            },
-        )?;
+            })?;
 
         let utf8_table = cp_info.utf8info();
 
@@ -65,16 +65,15 @@ impl Class {
         let field_info = Vec::new(); // TODO: unimplemented!
 
         let method_count = rdr.read_u16::<BigEndian>()?;
-        let (methods, mut rdr) =
-            (0..method_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
-                match MethodInfo::new(rdr, &utf8_table) {
-                    Ok((method_info, rdr2)) => {
-                        ret.push(method_info);
-                        Ok((ret, rdr2))
-                    }
-                    Err(err) => Err(err),
+        let (methods, mut rdr) = (0..method_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
+            match MethodInfo::new(rdr, &utf8_table) {
+                Ok((method_info, rdr2)) => {
+                    ret.push(method_info);
+                    Ok((ret, rdr2))
                 }
-            })?;
+                Err(err) => Err(err),
+            }
+        })?;
 
         let attributes_count = rdr.read_u16::<BigEndian>()?;
         let attribute_info = Vec::new(); // TODO: unimplemented!

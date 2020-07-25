@@ -41,21 +41,16 @@ impl VM {
                             if let Some(inst) = FromPrimitive::from_u8(*c) {
                                 match inst {
                                     Instruction::Aload0 => {
-                                        self.stack[self.bp + sp] = self.stack
-                                            [self.bp + *c as usize - Instruction::Aload0 as usize];
+                                        self.stack[self.bp + sp] =
+                                            self.stack[self.bp + *c as usize - Instruction::Aload0 as usize];
                                         sp += 1;
                                         pc += 1;
                                     }
                                     Instruction::Invokespecial => pc += 3, // TODO: unimplemented!
                                     Instruction::InvokeVirtual => {
                                         let index = self.stack[self.bp + sp - 1];
-                                        let arg_string = self
-                                            .class_info
-                                            .cp_info
-                                            .utf8info()
-                                            .get(&(index as u16))
-                                            .unwrap()
-                                            .clone();
+                                        let arg_string =
+                                            self.class_info.cp_info.utf8info().get(&(index as u16)).unwrap().clone();
                                         println!("{}", arg_string.to_string());
                                         pc += 3;
                                     }
@@ -63,15 +58,9 @@ impl VM {
                                         // TODO: remove unwrap()
                                         pc += 1;
                                         let index = code_attr.code.get(pc).unwrap();
-                                        let constant_pool = self
-                                            .class_info
-                                            .cp_info
-                                            .get(*index as usize - 1)
-                                            .unwrap();
+                                        let constant_pool = self.class_info.cp_info.get(*index as usize - 1).unwrap();
                                         let val = match constant_pool.info {
-                                            ConstantPoolInfo::StringInfo(string_info) => {
-                                                string_info.bytes
-                                            }
+                                            ConstantPoolInfo::StringInfo(string_info) => string_info.bytes,
                                             _ => unimplemented!(),
                                         };
                                         self.stack[self.bp + sp] = val.into();

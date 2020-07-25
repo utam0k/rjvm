@@ -29,11 +29,7 @@ impl MethodrefInfo {
 
 impl fmt::Display for MethodrefInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Methodref\t #{}.#{}",
-            self.class_index, self.name_and_type_index
-        )?;
+        write!(f, "Methodref\t #{}.#{}", self.class_index, self.name_and_type_index)?;
         Ok(())
     }
 }

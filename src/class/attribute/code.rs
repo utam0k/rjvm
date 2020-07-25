@@ -65,14 +65,12 @@ impl CodeAttribute {
         let max_locals = rdr.read_u16::<BigEndian>()?;
         let code_length = rdr.read_u32::<BigEndian>()?;
         let (code, mut rdr) =
-            (0..code_length).try_fold((Vec::new(), rdr), |(mut ret, mut rdr), _i| {
-                match rdr.read_u8() {
-                    Ok(value) => {
-                        ret.push(value);
-                        Ok((ret, rdr))
-                    }
-                    Err(err) => Err(err),
+            (0..code_length).try_fold((Vec::new(), rdr), |(mut ret, mut rdr), _i| match rdr.read_u8() {
+                Ok(value) => {
+                    ret.push(value);
+                    Ok((ret, rdr))
                 }
+                Err(err) => Err(err),
             })?;
         let exception_table_length = rdr.read_u16::<BigEndian>()?;
         let (exception_table, mut rdr) =
@@ -86,16 +84,15 @@ impl CodeAttribute {
                 }
             })?;
         let attributes_count = rdr.read_u16::<BigEndian>()?;
-        let (attribute_info, rdr) =
-            (0..attributes_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
-                match Attribute::new(rdr, utf8_table) {
-                    Ok((ai, rdr2)) => {
-                        ret.push(ai);
-                        Ok((ret, rdr2))
-                    }
-                    Err(err) => Err(err),
+        let (attribute_info, rdr) = (0..attributes_count).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
+            match Attribute::new(rdr, utf8_table) {
+                Ok((ai, rdr2)) => {
+                    ret.push(ai);
+                    Ok((ret, rdr2))
                 }
-            })?;
+                Err(err) => Err(err),
+            }
+        })?;
 
         Ok((
             Self {
@@ -115,11 +112,7 @@ impl CodeAttribute {
 
 impl fmt::Debug for CodeAttribute {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(
-            f,
-            "\t max_stack: {}, max_locals: {}",
-            self.max_stack, self.max_locals
-        )?;
+        writeln!(f, "\t max_stack: {}, max_locals: {}", self.max_stack, self.max_locals)?;
         for at in &self.attribute_info {
             write!(f, "{}", at)?;
         }

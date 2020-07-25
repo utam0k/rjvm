@@ -29,11 +29,7 @@ impl FieldrefInfo {
 
 impl fmt::Display for FieldrefInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Fieldref\t #{}.#{}",
-            self.class_index, self.name_and_type_index
-        )?;
+        write!(f, "Fieldref\t #{}.#{}", self.class_index, self.name_and_type_index)?;
         Ok(())
     }
 }
