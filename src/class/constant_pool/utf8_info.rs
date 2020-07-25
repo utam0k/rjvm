@@ -10,7 +10,7 @@ use crate::class::ReaderResult;
 #[derive(Clone)]
 pub struct Utf8Info {
     length: u16,
-    bytes: Vec<u8>,
+    pub bytes: Vec<u8>,
 }
 
 impl Utf8Info {

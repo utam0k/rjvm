@@ -7,6 +7,7 @@ use crate::class::attribute::Attribute;
 use crate::class::constant_pool_table::Utf8Table;
 use crate::class::ReaderResult;
 
+#[derive(Clone)]
 struct Exception {
     start_pc: u16,
     end_pc: u16,
@@ -44,13 +45,14 @@ impl fmt::Display for Exception {
     }
 }
 
+#[derive(Clone)]
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.7.3
 #[repr(C)]
 pub struct CodeAttribute {
     max_stack: u16,
     max_locals: u16,
     code_length: u32,
-    code: Vec<u8>,
+    pub code: Vec<u8>,
     exception_table_length: u16,
     exception_table: Vec<Exception>,
     attributes_count: u16,

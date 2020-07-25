@@ -23,6 +23,10 @@ impl ConstantPoolTable {
         self.table.push(item)
     }
 
+    pub fn get(&self, index: usize) -> Option<&ConstantPool> {
+        self.table.get(index)
+    }
+
     pub fn utf8info(&self) -> Utf8Table {
         self.iter()
             .enumerate()

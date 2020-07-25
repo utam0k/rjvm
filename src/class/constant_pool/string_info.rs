@@ -9,7 +9,7 @@ use crate::class::ReaderResult;
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct StringInfo {
-    bytes: u16,
+    pub bytes: u16,
 }
 
 impl StringInfo {

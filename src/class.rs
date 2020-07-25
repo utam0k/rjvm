@@ -1,5 +1,5 @@
 mod attribute;
-mod constant_pool;
+pub mod constant_pool;
 mod constant_pool_table;
 mod method;
 
@@ -21,7 +21,7 @@ pub struct Class {
     minor_version: u16,
     major_version: u16,
     constant_pool_count: u16,
-    cp_info: ConstantPoolTable,
+    pub cp_info: ConstantPoolTable,
     access_flags: u16,
     this_class: u16,
     super_class: u16,
@@ -30,7 +30,7 @@ pub struct Class {
     field_count: u16,
     field_info: Vec<u8>,
     method_count: u16,
-    methods: Vec<MethodInfo>,
+    pub methods: Vec<MethodInfo>,
     attributes_count: u16,
     attribute_info: Vec<u8>,
 }

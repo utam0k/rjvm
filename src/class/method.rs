@@ -3,6 +3,7 @@ use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
+use crate::class::attribute::code::CodeAttribute;
 use crate::class::attribute::Attribute;
 use crate::class::constant_pool_table::Utf8Table;
 use crate::class::ReaderResult;
@@ -33,7 +34,7 @@ impl fmt::Display for NotFoundUtf8 {
 #[repr(C)]
 pub struct MethodInfo {
     access_flags: u16,
-    name: String,
+    pub name: String,
     descriptor: String,
     attributes_count: u16,
     attribute_info: Vec<Attribute>,
@@ -76,6 +77,16 @@ impl MethodInfo {
             },
             rdr,
         ))
+    }
+
+    pub fn code_attribute(&self) -> Vec<&CodeAttribute> {
+        self.attribute_info
+            .iter()
+            .flat_map(|attr| match attr {
+                Attribute::Code(code_attr) => Some(code_attr),
+                _ => None,
+            })
+            .collect()
     }
 }
 

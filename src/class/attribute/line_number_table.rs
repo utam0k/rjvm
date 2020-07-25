@@ -5,6 +5,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 
 use crate::class::ReaderResult;
 
+#[derive(Clone)]
 struct LineNumber {
     pub start_pc: u16,
     pub line_number: u16,
@@ -37,6 +38,7 @@ impl fmt::Debug for LineNumber {
 }
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.7.12
+#[derive(Clone)]
 #[repr(C)]
 pub struct LineNumberTableAttribute {
     line_number_table_length: u16,

@@ -3,6 +3,7 @@ use std::io::Cursor;
 use std::io::Read;
 
 use rjvm::class::Class;
+use rjvm::vm::VM;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_path = "./samples/HelloWorld.class";
@@ -15,6 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (class, _rdr) = Class::new(rdr)?;
 
     println!("{:?}", class);
+
+    let mut vm = VM::new(class);
+    vm.exec()?;
 
     Ok(())
 }
