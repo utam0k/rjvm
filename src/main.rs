@@ -1,3 +1,4 @@
+use std::env;
 use std::fs::File;
 use std::io::Cursor;
 use std::io::Read;
@@ -6,7 +7,8 @@ use rjvm::class::Class;
 use rjvm::vm::VM;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let file_path = "./samples/HelloWorld.class";
+    let args: Vec<String> = env::args().collect();
+    let file_path = args.get(1).expect("please give the path to a class file.");
     let mut file = File::open(file_path)?;
 
     let mut data = Vec::new();
@@ -15,9 +17,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (class, _rdr) = Class::new(rdr)?;
 
+    println!("---------- Class information ----------");
     println!("{:?}", class);
 
     let mut vm = VM::new(class);
+    println!("---------- Exec output ----------");
     vm.exec()?;
 
     Ok(())

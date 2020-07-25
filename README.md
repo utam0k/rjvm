@@ -19,5 +19,5 @@ It's still not working right now and outputs the results of reading `samples/Hel
 Look forward to seeing it work :)
 
 ```
-$ cargo run
+$ cargo run samples/HelloWorld.class
 ```
