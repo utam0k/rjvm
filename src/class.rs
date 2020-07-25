@@ -1,7 +1,7 @@
-mod attribute;
+pub mod attribute;
 pub mod constant_pool;
 mod constant_pool_table;
-mod method;
+pub mod method;
 
 use std::fmt;
 use std::io::Cursor;
