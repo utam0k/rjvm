@@ -9,8 +9,8 @@ use crate::class::ReaderResult;
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct NameAndTypeInfo {
-    name_index: u16,
-    descriptor_index: u16,
+    pub name_index: u16,
+    pub descriptor_index: u16,
 }
 
 impl NameAndTypeInfo {
@@ -29,7 +29,7 @@ impl NameAndTypeInfo {
 
 impl fmt::Display for NameAndTypeInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "NameAndTyp\t #{}:#{}", self.name_index, self.descriptor_index)?;
+        write!(f, "NameAndType\t #{}:#{}", self.name_index, self.descriptor_index)?;
         Ok(())
     }
 }

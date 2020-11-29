@@ -9,8 +9,8 @@ use crate::class::ReaderResult;
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct MethodrefInfo {
-    class_index: u16,
-    name_and_type_index: u16,
+    pub class_index: u16,
+    pub name_and_type_index: u16,
 }
 
 impl MethodrefInfo {
