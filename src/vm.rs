@@ -1,9 +1,10 @@
+use std::collections::HashMap;
+
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
 use crate::class::attribute::code::CodeAttribute;
 use crate::class::constant_pool::ConstantPoolInfo;
-use crate::class::method::MethodInfo;
 use crate::class::Class;
 
 #[macro_export]
@@ -18,8 +19,11 @@ macro_rules! get_constant_pool {
 
 #[derive(Debug, FromPrimitive, PartialEq)]
 enum Instruction {
+    Iconst5 = 0x08,
     Ldc = 0x12,
+    Iload1 = 0x1b,
     Aload0 = 0x2a,
+    Istore1 = 0x3c,
     Return = 0xb1,
     GetStatic = 0xb2,
     InvokeVirtual = 0xb6,
@@ -29,15 +33,15 @@ enum Instruction {
 struct Frame {
     pub pc: usize,
     pub sp: usize,
-    pub method_info: MethodInfo,
+    pub local_variable: HashMap<usize, u64>, // TODO: implement stack and unification value
 }
 
 impl Frame {
-    pub fn new(method_info: MethodInfo) -> Self {
+    pub fn new() -> Self {
         Self {
             pc: 0,
             sp: 0,
-            method_info,
+            local_variable: HashMap::new(),
         }
     }
 }
@@ -58,24 +62,25 @@ impl VM {
     }
 
     pub fn exec(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let mut frames: Vec<Frame> = self.class_info.methods.iter().map(|m| Frame::new(m.clone())).collect();
-        for mut frame in &mut frames {
-            for code_attr in frame.method_info.code_attribute() {
+        // TODO: remove clone()
+        for method in &self.class_info.methods.clone() {
+            for code_attr in method.code_attribute() {
+                let mut frame = Frame::new();
                 loop {
                     match code_attr.code.get(frame.pc) {
                         None => break,
                         Some(c) => {
                             if let Some(inst) = FromPrimitive::from_u8(*c) {
-                                if let Some((pc, sp)) = self.exec_per_inst(inst, code_attr, frame) {
-                                    frame.sp += sp;
-                                    frame.pc += pc;
-                                } else {
-                                    break;
+                                if let Err(msg) = self.exec_per_inst(inst, &code_attr, &mut frame) {
+                                    panic!(msg)
                                 }
                             } else {
-                                unimplemented!()
+                                unimplemented!("code: {:0x}", c)
                             };
                         }
+                    }
+                    if code_attr.code_length == frame.pc as u32 {
+                        break;
                     }
                 }
                 self.bp += frame.sp;
@@ -84,14 +89,35 @@ impl VM {
         Ok(())
     }
 
-    fn exec_per_inst(&mut self, inst: Instruction, code_attr: &CodeAttribute, frame: &Frame) -> Option<(usize, usize)> {
+    fn exec_per_inst(&mut self, inst: Instruction, code_attr: &CodeAttribute, frame: &mut Frame) -> Result<(), String> {
         use ConstantPoolInfo::*;
         match inst {
+            Instruction::Iconst5 => {
+                self.stack[self.bp + frame.sp] = 5;
+                frame.sp += 1;
+                frame.pc += 1;
+            }
+            Instruction::Iload1 => {
+                if let Some(val) = frame.local_variable.get(&1) {
+                    self.stack[self.bp + frame.sp] = *val;
+                    frame.sp += 1;
+                } else {
+                    return Err("Variable is not set to avalue".into());
+                }
+                frame.pc += 1;
+            }
             Instruction::Aload0 => {
                 self.stack[self.bp + frame.sp] = self.stack[self.bp + 0];
-                return Some((1, 1));
+                frame.sp += 1;
+                frame.pc += 1;
             }
-            Instruction::Invokespecial => return Some((3, 0)),
+            Instruction::Istore1 => {
+                let val = self.stack[self.bp + frame.sp - 1];
+                frame.local_variable.insert(1, val);
+                frame.sp -= 1;
+                frame.pc += 1;
+            }
+            Instruction::Invokespecial => frame.pc += 3,
             Instruction::InvokeVirtual => {
                 let index = self.stack[self.bp + frame.sp - 1];
 
@@ -103,13 +129,17 @@ impl VM {
 
                 match &*method_name.to_string() {
                     "println" => {
-                        let arg_string = self.class_info.cp_info.utf8info().get(&(index as u16)).unwrap().clone();
-                        println!("{}", arg_string.to_string());
+                        // let arg_string = self.class_info.cp_info.utf8info().get(&(index as u16)).unwrap().clone();
+                        if let Some(arg_string) = self.class_info.cp_info.utf8info().get(&(index as u16)) {
+                            println!("{}", arg_string.to_string());
+                        } else {
+                            println!("{}", index);
+                        }
                     }
                     _ => unimplemented!(),
                 }
 
-                return Some((3, 0));
+                frame.pc += 3;
             }
             Instruction::Ldc => {
                 // TODO: remove unwrap()
@@ -120,9 +150,10 @@ impl VM {
                     _ => unimplemented!(),
                 };
                 self.stack[self.bp + frame.sp] = val.into();
-                return Some((2, 1));
+                frame.pc += 2;
+                frame.sp += 1;
             }
-            Instruction::Return => return None,
+            Instruction::Return => frame.pc += 1,
             Instruction::GetStatic => {
                 // TODO: unimplemented!
                 // let index1 = code_attr.code.get(frame.pc + 1).unwrap();
@@ -132,8 +163,10 @@ impl VM {
                 // let symbol2 = self.class_info.cp_info.get(*index2 as usize + 1).unwrap();
                 // println!("{}", symbol1);
                 // println!("{}", symbol2);
-                return Some((3, 1));
+                frame.pc += 3;
+                frame.sp += 1;
             }
         };
+        Ok(())
     }
 }

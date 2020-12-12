@@ -51,7 +51,7 @@ impl fmt::Display for Exception {
 pub struct CodeAttribute {
     max_stack: u16,
     max_locals: u16,
-    code_length: u32,
+    pub code_length: u32,
     pub code: Vec<u8>,
     exception_table_length: u16,
     exception_table: Vec<Exception>,
