@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?}", class);
 
     let mut vm = VM::new(class);
-    println!("---------- Exec output ----------");
+    println!("---------- Execution output ----------");
     vm.exec()?;
 
     Ok(())

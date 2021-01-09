@@ -6,6 +6,7 @@ use num_traits::FromPrimitive;
 use crate::class::attribute::code::CodeAttribute;
 use crate::class::constant_pool::ConstantPoolInfo;
 use crate::class::Class;
+use crate::operand_stack::OperandStack;
 
 #[macro_export]
 macro_rules! get_constant_pool {
@@ -32,33 +33,27 @@ enum Instruction {
 
 struct Frame {
     pub pc: usize,
-    pub sp: usize,
     pub local_variable: HashMap<usize, u64>, // TODO: implement stack and unification value
+    pub operand_stack: OperandStack,
 }
 
 impl Frame {
     pub fn new() -> Self {
         Self {
             pc: 0,
-            sp: 0,
             local_variable: HashMap::new(),
+            operand_stack: OperandStack::new(),
         }
     }
 }
 
 pub struct VM {
     class_info: Class,
-    bp: usize,
-    stack: Vec<u64>,
 }
 
 impl VM {
     pub fn new(class_info: Class) -> Self {
-        VM {
-            class_info,
-            bp: 0,
-            stack: vec![0; 1024],
-        }
+        VM { class_info }
     }
 
     pub fn exec(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -83,7 +78,6 @@ impl VM {
                         break;
                     }
                 }
-                self.bp += frame.sp;
             }
         }
         Ok(())
@@ -93,33 +87,29 @@ impl VM {
         use ConstantPoolInfo::*;
         match inst {
             Instruction::Iconst5 => {
-                self.stack[self.bp + frame.sp] = 5;
-                frame.sp += 1;
+                frame.operand_stack.push(5);
                 frame.pc += 1;
             }
             Instruction::Iload1 => {
                 if let Some(val) = frame.local_variable.get(&1) {
-                    self.stack[self.bp + frame.sp] = *val;
-                    frame.sp += 1;
+                    frame.operand_stack.push(*val);
                 } else {
                     return Err("Variable is not set to avalue".into());
                 }
                 frame.pc += 1;
             }
             Instruction::Aload0 => {
-                self.stack[self.bp + frame.sp] = self.stack[self.bp + 0];
-                frame.sp += 1;
+                // frame.operand_stack.push(frame.operand_stack.pop().unwrap());
                 frame.pc += 1;
             }
             Instruction::Istore1 => {
-                let val = self.stack[self.bp + frame.sp - 1];
+                let val = frame.operand_stack.pop().unwrap();
                 frame.local_variable.insert(1, val);
-                frame.sp -= 1;
                 frame.pc += 1;
             }
             Instruction::Invokespecial => frame.pc += 3,
             Instruction::InvokeVirtual => {
-                let index = self.stack[self.bp + frame.sp - 1];
+                let index = frame.operand_stack.pop().unwrap();
 
                 let method_index = code_attr.code.get(frame.pc + 2).unwrap();
                 let method_ref = get_constant_pool!(self.class_info.cp_info, *method_index, MethodrefInfo);
@@ -149,9 +139,8 @@ impl VM {
                     ConstantPoolInfo::StringInfo(string_info) => string_info.bytes,
                     _ => unimplemented!(),
                 };
-                self.stack[self.bp + frame.sp] = val.into();
+                frame.operand_stack.push(val.into());
                 frame.pc += 2;
-                frame.sp += 1;
             }
             Instruction::Return => frame.pc += 1,
             Instruction::GetStatic => {
@@ -164,7 +153,7 @@ impl VM {
                 // println!("{}", symbol1);
                 // println!("{}", symbol2);
                 frame.pc += 3;
-                frame.sp += 1;
+                frame.operand_stack.push(0);
             }
         };
         Ok(())
