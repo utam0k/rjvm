@@ -72,8 +72,7 @@ impl VM {
             })
             .collect();
 
-        // TODO: remove clone()
-        for (method, mut frame) in self.class_info.methods.clone().iter().zip(frames) {
+        for (method, mut frame) in self.class_info.methods.iter().zip(frames) {
             for code_attr in method.code_attribute() {
                 loop {
                     match code_attr.code.get(frame.pc) {
@@ -97,7 +96,7 @@ impl VM {
         Ok(())
     }
 
-    fn exec_per_inst(&mut self, inst: Instruction, code_attr: &CodeAttribute, frame: &mut Frame) -> Result<(), String> {
+    fn exec_per_inst(&self, inst: Instruction, code_attr: &CodeAttribute, frame: &mut Frame) -> Result<(), String> {
         use ConstantPoolInfo::*;
         match inst {
             Instruction::Iconst5 => {
