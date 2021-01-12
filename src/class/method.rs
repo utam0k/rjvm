@@ -32,7 +32,7 @@ impl fmt::Display for NotFoundUtf8 {
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.6
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct MethodInfo {
     access_flags: u16,
     pub name: String,

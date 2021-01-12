@@ -24,7 +24,7 @@ pub struct Class {
     pub cp_info: ConstantPoolTable,
     access_flags: u16,
     this_class: u16,
-    super_class: u16,
+    pub super_class: u16,
     interfaces_count: u16,
     interfaces: Vec<u8>,
     field_count: u16,

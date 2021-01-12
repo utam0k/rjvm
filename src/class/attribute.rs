@@ -30,7 +30,7 @@ impl fmt::Display for NotFoundAttribute {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.7
 pub enum Attribute {
     Code(code::CodeAttribute),

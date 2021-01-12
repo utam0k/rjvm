@@ -7,6 +7,7 @@
 // }
 type Item = u64;
 
+#[derive(Debug, Clone, Default)]
 pub struct OperandStack {
     pub stack: Vec<Item>,
 }

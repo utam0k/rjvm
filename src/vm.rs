@@ -31,17 +31,20 @@ enum Instruction {
     Invokespecial = 0xb7,
 }
 
+type LocalVariable = HashMap<usize, u64>;
+
+#[derive(Debug, Clone, Default)]
 struct Frame {
     pub pc: usize,
-    pub local_variable: HashMap<usize, u64>, // TODO: implement stack and unification value
+    pub local_variable: LocalVariable,
     pub operand_stack: OperandStack,
 }
 
 impl Frame {
-    pub fn new() -> Self {
+    pub fn new(local_variable: LocalVariable) -> Self {
         Self {
             pc: 0,
-            local_variable: HashMap::new(),
+            local_variable,
             operand_stack: OperandStack::new(),
         }
     }
@@ -57,10 +60,21 @@ impl VM {
     }
 
     pub fn exec(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let frames: Vec<Frame> = (0..self.class_info.methods.len())
+            .map(|i| {
+                if i == 0 {
+                    let mut local_variable = LocalVariable::new();
+                    local_variable.insert(0, self.class_info.super_class as u64);
+                    Frame::new(local_variable)
+                } else {
+                    Frame::new(LocalVariable::new())
+                }
+            })
+            .collect();
+
         // TODO: remove clone()
-        for method in &self.class_info.methods.clone() {
+        for (method, mut frame) in self.class_info.methods.clone().iter().zip(frames) {
             for code_attr in method.code_attribute() {
-                let mut frame = Frame::new();
                 loop {
                     match code_attr.code.get(frame.pc) {
                         None => break,
@@ -99,7 +113,8 @@ impl VM {
                 frame.pc += 1;
             }
             Instruction::Aload0 => {
-                // frame.operand_stack.push(frame.operand_stack.pop().unwrap());
+                let val = frame.local_variable.get(&0).unwrap();
+                frame.operand_stack.push(*val);
                 frame.pc += 1;
             }
             Instruction::Istore1 => {
@@ -119,7 +134,6 @@ impl VM {
 
                 match &*method_name.to_string() {
                     "println" => {
-                        // let arg_string = self.class_info.cp_info.utf8info().get(&(index as u16)).unwrap().clone();
                         if let Some(arg_string) = self.class_info.cp_info.utf8info().get(&(index as u16)) {
                             println!("{}", arg_string.to_string());
                         } else {
