@@ -6,7 +6,7 @@ use num_traits::FromPrimitive;
 use crate::class::attribute::code::CodeAttribute;
 use crate::class::constant_pool::ConstantPoolInfo;
 use crate::class::Class;
-use crate::operand_stack::OperandStack;
+use crate::operand_stack::{Item, OperandStack};
 
 #[macro_export]
 macro_rules! get_constant_pool {
@@ -31,7 +31,7 @@ enum Instruction {
     Invokespecial = 0xb7,
 }
 
-type LocalVariable = HashMap<usize, u64>;
+type LocalVariable = HashMap<usize, Item>;
 
 #[derive(Debug, Clone, Default)]
 struct Frame {
@@ -64,7 +64,7 @@ impl VM {
             .map(|i| {
                 if i == 0 {
                     let mut local_variable = LocalVariable::new();
-                    local_variable.insert(0, self.class_info.super_class as u64);
+                    local_variable.insert(0, Item::Classref(self.class_info.super_class as usize));
                     Frame::new(local_variable)
                 } else {
                     Frame::new(LocalVariable::new())
@@ -100,7 +100,7 @@ impl VM {
         use ConstantPoolInfo::*;
         match inst {
             Instruction::Iconst5 => {
-                frame.operand_stack.push(5);
+                frame.operand_stack.push(Item::Int(5));
                 frame.pc += 1;
             }
             Instruction::Iload1 => {
@@ -123,26 +123,26 @@ impl VM {
             }
             Instruction::Invokespecial => frame.pc += 3,
             Instruction::InvokeVirtual => {
-                let index = frame.operand_stack.pop().unwrap();
+                if let Some(Item::Int(index)) = frame.operand_stack.pop() {
+                    let method_index = code_attr.code.get(frame.pc + 2).unwrap();
+                    let method_ref = get_constant_pool!(self.class_info.cp_info, *method_index, MethodrefInfo);
+                    let name_and_type =
+                        get_constant_pool!(self.class_info.cp_info, method_ref.name_and_type_index, NameAndTypeInfo);
+                    let method_name = get_constant_pool!(self.class_info.cp_info, name_and_type.name_index, Utf8Info);
 
-                let method_index = code_attr.code.get(frame.pc + 2).unwrap();
-                let method_ref = get_constant_pool!(self.class_info.cp_info, *method_index, MethodrefInfo);
-                let name_and_type =
-                    get_constant_pool!(self.class_info.cp_info, method_ref.name_and_type_index, NameAndTypeInfo);
-                let method_name = get_constant_pool!(self.class_info.cp_info, name_and_type.name_index, Utf8Info);
-
-                match &*method_name.to_string() {
-                    "println" => {
-                        if let Some(arg_string) = self.class_info.cp_info.utf8info().get(&(index as u16)) {
-                            println!("{}", arg_string.to_string());
-                        } else {
-                            println!("{}", index);
+                    match &*method_name.to_string() {
+                        "println" => {
+                            if let Some(arg_string) = self.class_info.cp_info.utf8info().get(&(index as u16)) {
+                                println!("{}", arg_string.to_string());
+                            } else {
+                                println!("{}", index);
+                            }
                         }
+                        _ => unimplemented!(),
                     }
-                    _ => unimplemented!(),
-                }
 
-                frame.pc += 3;
+                    frame.pc += 3;
+                }
             }
             Instruction::Ldc => {
                 // TODO: remove unwrap()
@@ -152,7 +152,7 @@ impl VM {
                     ConstantPoolInfo::StringInfo(string_info) => string_info.bytes,
                     _ => unimplemented!(),
                 };
-                frame.operand_stack.push(val.into());
+                frame.operand_stack.push(Item::String(val.into()));
                 frame.pc += 2;
             }
             Instruction::Return => frame.pc += 1,
@@ -166,7 +166,7 @@ impl VM {
                 // println!("{}", symbol1);
                 // println!("{}", symbol2);
                 frame.pc += 3;
-                frame.operand_stack.push(0);
+                frame.operand_stack.push(Item::Int(0));
             }
         };
         Ok(())

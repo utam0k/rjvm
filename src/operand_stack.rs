@@ -1,11 +1,14 @@
-// pub enum Item {
-//     Int(i32),
-//     Classref(usize),
-//     Fieldref(usize),
-//     Objectref(usize),
-//     Arrayref(usize),
-// }
-type Item = u64;
+#[derive(Debug, Clone, Copy)]
+pub enum Item {
+    Int(i32),
+    Classref(usize),
+    String(usize),
+    Fieldref(usize),
+    Objectref(usize),
+    Arrayref(usize),
+}
+
+// type Item = u64;
 
 #[derive(Debug, Clone, Default)]
 pub struct OperandStack {
