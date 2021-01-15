@@ -156,12 +156,11 @@ impl VM {
                     "println" => {
                         let utf8info = self.class_info.cp_info.utf8info();
                         let mut frame = self.get_current_mut_frame();
-                        if let Some(Item::Int(index)) = frame.operand_stack.pop() {
-                            if let Some(arg_string) = utf8info.get(&(index as u16)) {
-                                println!("{}", arg_string.to_string());
-                            } else {
-                                println!("{}", index);
-                            }
+                        match frame.operand_stack.pop() {
+                            Some(Item::Int(index)) => println!("{}", index),
+                            Some(Item::String(index)) => println!("{}", utf8info.get(&(index as u16)).unwrap()),
+                            None => panic!(),
+                            _ => unimplemented!(),
                         }
                         frame.pc += 3;
                     }
