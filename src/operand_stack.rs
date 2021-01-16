@@ -20,7 +20,7 @@ impl OperandStack {
         Self { stack: vec![] }
     }
 
-    pub fn push(&mut self, item: Item) -> () {
+    pub fn push(&mut self, item: Item) {
         self.stack.push(item)
     }
 

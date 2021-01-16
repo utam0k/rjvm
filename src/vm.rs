@@ -141,10 +141,7 @@ impl VM {
                 frame.local_variable.insert(1, val);
                 frame.pc += 1;
             }
-            Instruction::Invokespecial => {
-                let mut frame = self.get_current_mut_frame();
-                frame.pc += 3;
-            }
+            Instruction::Invokespecial => self.get_current_mut_frame().pc += 3,
             Instruction::InvokeVirtual => {
                 let method_index = code_attr.code.get(self.get_current_frame().pc + 2).unwrap();
                 let method_ref = get_constant_pool!(self.class_info.cp_info, *method_index, MethodrefInfo);
@@ -179,10 +176,7 @@ impl VM {
                 frame.operand_stack.push(Item::String(val.into()));
                 frame.pc += 2;
             }
-            Instruction::Return => {
-                let mut frame = self.get_current_mut_frame();
-                frame.pc += 1;
-            }
+            Instruction::Return => self.get_current_mut_frame().pc += 1,
             Instruction::GetStatic => {
                 // TODO: unimplemented!
                 // let index1 = code_attr.code.get(frame.pc + 1).unwrap();
