@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
-
 use crate::class::attribute::code::CodeAttribute;
+use crate::class::attribute::code::Instruction;
 use crate::class::constant_pool::ConstantPoolInfo;
 use crate::class::method::MethodInfo;
 use crate::class::Class;
@@ -12,25 +10,25 @@ use crate::operand_stack::{Item, OperandStack};
 #[macro_export]
 macro_rules! get_constant_pool {
     ($cp_pool: expr, $index: expr, $expect: tt) => {
-        match &$cp_pool.get($index as usize - 1).unwrap().info {
+        match &$cp_pool.get(($index - 1).into()).unwrap().info {
             $expect(val) => val,
             _v => unreachable!(),
         }
     };
 }
 
-#[derive(Debug, FromPrimitive, PartialEq)]
-enum Instruction {
-    Iconst5 = 0x08,
-    Ldc = 0x12,
-    Iload1 = 0x1b,
-    Aload0 = 0x2a,
-    Istore1 = 0x3c,
-    Return = 0xb1,
-    GetStatic = 0xb2,
-    InvokeVirtual = 0xb6,
-    Invokespecial = 0xb7,
-}
+// #[derive(Debug, FromPrimitive, PartialEq)]
+// enum Instruction {
+//     Iconst5 = 0x08,
+//     Ldc = 0x12,
+//     Iload1 = 0x1b,
+//     Aload0 = 0x2a,
+//     Istore1 = 0x3c,
+//     Return = 0xb1,
+//     GetStatic = 0xb2,
+//     InvokeVirtual = 0xb6,
+//     Invokespecial = 0xb7,
+// }
 
 type LocalVariable = HashMap<usize, Item>;
 
@@ -92,27 +90,32 @@ impl VM {
 
     fn exec_method(&mut self, method: &MethodInfo) {
         for code_attr in method.code_attribute() {
-            loop {
-                match code_attr.code.get(self.get_current_frame().pc) {
-                    None => break,
-                    Some(c) => {
-                        if let Some(inst) = FromPrimitive::from_u8(*c) {
-                            if let Err(msg) = self.exec_per_inst(inst, &code_attr) {
-                                panic!(msg)
-                            }
-                        } else {
-                            unimplemented!("code: {:0x}", c)
-                        };
-                    }
-                }
-                if code_attr.code_length == self.get_current_frame().pc as u32 {
-                    break;
+            for inst in &code_attr.instructions {
+                if let Err(msg) = self.exec_per_inst(inst, &code_attr) {
+                    panic!(msg)
                 }
             }
+            // loop {
+            //     match code_attr.code.get(self.get_current_frame().pc) {
+            //         None => break,
+            //         Some(c) => {
+            //             if let Some(inst) = FromPrimitive::from_u8(*c) {
+            //                 if let Err(msg) = self.exec_per_inst(inst, &code_attr) {
+            //                     panic!(msg)
+            //                 }
+            //             } else {
+            //                 unimplemented!("code: {:0x}", c)
+            //             };
+            //         }
+            //     }
+            //     if code_attr.code_length == self.get_current_frame().pc as u32 {
+            //         break;
+            //     }
+            // }
         }
     }
 
-    fn exec_per_inst(&mut self, inst: Instruction, code_attr: &CodeAttribute) -> Result<(), String> {
+    fn exec_per_inst(&mut self, inst: &Instruction, code_attr: &CodeAttribute) -> Result<(), String> {
         use ConstantPoolInfo::*;
         match inst {
             Instruction::Iconst5 => {
@@ -141,10 +144,10 @@ impl VM {
                 frame.local_variable.insert(1, val);
                 frame.pc += 1;
             }
-            Instruction::Invokespecial => self.get_current_mut_frame().pc += 3,
-            Instruction::InvokeVirtual => {
-                let method_index = code_attr.code.get(self.get_current_frame().pc + 2).unwrap();
-                let method_ref = get_constant_pool!(self.class_info.cp_info, *method_index, MethodrefInfo);
+            Instruction::Invokespecial(_, _) => self.get_current_mut_frame().pc += 3,
+            Instruction::InvokeVirtual(_, method_index) => {
+                // let method_index = code_attr.code.get(self.get_current_frame().pc + 2).unwrap();
+                let method_ref = get_constant_pool!(self.class_info.cp_info, method_index, MethodrefInfo);
                 let name_and_type =
                     get_constant_pool!(self.class_info.cp_info, method_ref.name_and_type_index, NameAndTypeInfo);
                 let method_name = get_constant_pool!(self.class_info.cp_info, name_and_type.name_index, Utf8Info);
@@ -164,10 +167,9 @@ impl VM {
                     _ => unimplemented!(),
                 }
             }
-            Instruction::Ldc => {
+            Instruction::Ldc(index) => {
                 // TODO: remove unwrap()
-                let index = code_attr.code.get(self.get_current_frame().pc + 1).unwrap();
-                let constant_pool = self.class_info.cp_info.get(*index as usize - 1).unwrap();
+                let constant_pool = self.class_info.cp_info.get((index - 1).into()).unwrap();
                 let val = match constant_pool.info {
                     ConstantPoolInfo::StringInfo(string_info) => string_info.bytes,
                     _ => unimplemented!(),
@@ -177,7 +179,7 @@ impl VM {
                 frame.pc += 2;
             }
             Instruction::Return => self.get_current_mut_frame().pc += 1,
-            Instruction::GetStatic => {
+            Instruction::GetStatic(_, _) => {
                 // TODO: unimplemented!
                 // let index1 = code_attr.code.get(frame.pc + 1).unwrap();
                 // let index2 = code_attr.code.get(frame.pc + 2).unwrap();

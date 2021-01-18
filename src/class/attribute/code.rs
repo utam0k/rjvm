@@ -7,6 +7,19 @@ use crate::class::attribute::Attribute;
 use crate::class::constant_pool_table::Utf8Table;
 use crate::class::ReaderResult;
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum Instruction {
+    Iconst5,
+    Ldc(u8),
+    Iload1,
+    Aload0,
+    Istore1,
+    Return,
+    GetStatic(u8, u8),
+    InvokeVirtual(u8, u8),
+    Invokespecial(u8, u8),
+}
+
 #[derive(Clone)]
 struct Exception {
     start_pc: u16,
@@ -52,7 +65,7 @@ pub struct CodeAttribute {
     max_stack: u16,
     max_locals: u16,
     pub code_length: u32,
-    pub code: Vec<u8>,
+    pub instructions: Vec<Instruction>,
     exception_table_length: u16,
     exception_table: Vec<Exception>,
     attributes_count: u16,
@@ -64,7 +77,7 @@ impl CodeAttribute {
         let max_stack = rdr.read_u16::<BigEndian>()?;
         let max_locals = rdr.read_u16::<BigEndian>()?;
         let code_length = rdr.read_u32::<BigEndian>()?;
-        let (code, mut rdr) =
+        let (mut code, mut rdr) =
             (0..code_length).try_fold((Vec::new(), rdr), |(mut ret, mut rdr), _i| match rdr.read_u8() {
                 Ok(value) => {
                     ret.push(value);
@@ -72,6 +85,29 @@ impl CodeAttribute {
                 }
                 Err(err) => Err(err),
             })?;
+
+        let mut instructions: Vec<Instruction> = vec![];
+        code.reverse();
+        loop {
+            if code.is_empty() {
+                break;
+            }
+            let inst = match code.pop() {
+                Some(0x08) => Instruction::Iconst5,
+                Some(0x12) => Instruction::Ldc(code.pop().unwrap()),
+                Some(0x1b) => Instruction::Iload1,
+                Some(0x2a) => Instruction::Aload0,
+                Some(0x3c) => Instruction::Istore1,
+                Some(0xb1) => Instruction::Return,
+                Some(0xb2) => Instruction::GetStatic(code.pop().unwrap(), code.pop().unwrap()),
+                Some(0xb6) => Instruction::InvokeVirtual(code.pop().unwrap(), code.pop().unwrap()),
+                Some(0xb7) => Instruction::Invokespecial(code.pop().unwrap(), code.pop().unwrap()),
+                Some(_) => unimplemented!(),
+                None => panic!(),
+            };
+            instructions.push(inst);
+        }
+
         let exception_table_length = rdr.read_u16::<BigEndian>()?;
         let (exception_table, mut rdr) =
             (0..exception_table_length).try_fold((Vec::new(), rdr), |(mut ret, rdr), _i| {
@@ -99,7 +135,7 @@ impl CodeAttribute {
                 max_stack,
                 max_locals,
                 code_length,
-                code,
+                instructions,
                 exception_table_length,
                 exception_table,
                 attributes_count,
@@ -116,9 +152,9 @@ impl fmt::Debug for CodeAttribute {
         for at in &self.attribute_info {
             write!(f, "{}", at)?;
         }
-        write!(f, "\t code: ")?;
-        for c in &self.code {
-            write!(f, "{:x} ", c)?;
+        write!(f, "\t instructsion: ")?;
+        for i in &self.instructions {
+            writeln!(f, "{:#?} ", i)?;
         }
         Ok(())
     }
