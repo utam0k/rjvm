@@ -66,10 +66,6 @@ impl VM {
         self.frames.last_mut().unwrap()
     }
 
-    fn get_current_frame(&self) -> &Frame {
-        self.frames.last().unwrap()
-    }
-
     pub fn exec(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut local_variable = LocalVariable::new();
         local_variable.insert(0, Item::Classref(self.class_info.super_class as usize));
@@ -91,31 +87,14 @@ impl VM {
     fn exec_method(&mut self, method: &MethodInfo) {
         for code_attr in method.code_attribute() {
             for inst in &code_attr.instructions {
-                if let Err(msg) = self.exec_per_inst(inst, &code_attr) {
+                if let Err(msg) = self.exec_per_inst(inst) {
                     panic!(msg)
                 }
             }
-            // loop {
-            //     match code_attr.code.get(self.get_current_frame().pc) {
-            //         None => break,
-            //         Some(c) => {
-            //             if let Some(inst) = FromPrimitive::from_u8(*c) {
-            //                 if let Err(msg) = self.exec_per_inst(inst, &code_attr) {
-            //                     panic!(msg)
-            //                 }
-            //             } else {
-            //                 unimplemented!("code: {:0x}", c)
-            //             };
-            //         }
-            //     }
-            //     if code_attr.code_length == self.get_current_frame().pc as u32 {
-            //         break;
-            //     }
-            // }
         }
     }
 
-    fn exec_per_inst(&mut self, inst: &Instruction, code_attr: &CodeAttribute) -> Result<(), String> {
+    fn exec_per_inst(&mut self, inst: &Instruction) -> Result<(), String> {
         use ConstantPoolInfo::*;
         match inst {
             Instruction::Iconst5 => {
@@ -146,7 +125,6 @@ impl VM {
             }
             Instruction::Invokespecial(_, _) => self.get_current_mut_frame().pc += 3,
             Instruction::InvokeVirtual(_, method_index) => {
-                // let method_index = code_attr.code.get(self.get_current_frame().pc + 2).unwrap();
                 let method_ref = get_constant_pool!(self.class_info.cp_info, method_index, MethodrefInfo);
                 let name_and_type =
                     get_constant_pool!(self.class_info.cp_info, method_ref.name_and_type_index, NameAndTypeInfo);
