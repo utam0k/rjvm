@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
-use crate::class::attribute::code::CodeAttribute;
-use crate::class::attribute::code::Instruction;
 use crate::class::constant_pool::ConstantPoolInfo;
 use crate::class::method::MethodInfo;
 use crate::class::Class;
+use crate::instruction::Instruction;
 use crate::operand_stack::{Item, OperandStack};
 
 #[macro_export]
@@ -16,19 +15,6 @@ macro_rules! get_constant_pool {
         }
     };
 }
-
-// #[derive(Debug, FromPrimitive, PartialEq)]
-// enum Instruction {
-//     Iconst5 = 0x08,
-//     Ldc = 0x12,
-//     Iload1 = 0x1b,
-//     Aload0 = 0x2a,
-//     Istore1 = 0x3c,
-//     Return = 0xb1,
-//     GetStatic = 0xb2,
-//     InvokeVirtual = 0xb6,
-//     Invokespecial = 0xb7,
-// }
 
 type LocalVariable = HashMap<usize, Item>;
 
