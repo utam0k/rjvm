@@ -63,7 +63,7 @@ impl VM {
     }
 
     fn get_current_mut_frame(&mut self) -> &mut Frame {
-        self.frames.last_mut().unwrap()
+        self.frames.last_mut().expect("A frame should be stacked.")
     }
 
     pub fn exec(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -76,7 +76,7 @@ impl VM {
             .methods
             .iter()
             .find(|&method| method.name == "main")
-            .unwrap()
+            .expect("The main method was not found.")
             .clone();
 
         self.exec_method(&main_method);
