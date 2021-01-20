@@ -140,9 +140,9 @@ impl fmt::Debug for CodeAttribute {
         for at in &self.attribute_info {
             write!(f, "{}", at)?;
         }
-        write!(f, "\t instructsion: ")?;
+        writeln!(f, "\t instructsion: ")?;
         for i in &self.instructions {
-            writeln!(f, "\t\t {:#?} ", i)?;
+            writeln!(f, "\t     {} ", i)?;
         }
         Ok(())
     }
