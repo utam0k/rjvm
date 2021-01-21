@@ -13,6 +13,32 @@ pub enum Instruction {
     Invokespecial(u8, u8),
 }
 
+impl Instruction {
+    pub fn from_codes(mut codes: Vec<u8>) -> Vec<Instruction> {
+        let mut instructions: Vec<Instruction> = vec![];
+        loop {
+            if codes.is_empty() {
+                break;
+            }
+            let inst = match codes.pop() {
+                Some(0x08) => Instruction::Iconst5,
+                Some(0x12) => Instruction::Ldc(codes.pop().unwrap()),
+                Some(0x1b) => Instruction::Iload1,
+                Some(0x2a) => Instruction::Aload0,
+                Some(0x3c) => Instruction::Istore1,
+                Some(0xb1) => Instruction::Return,
+                Some(0xb2) => Instruction::GetStatic(codes.pop().unwrap(), codes.pop().unwrap()),
+                Some(0xb6) => Instruction::InvokeVirtual(codes.pop().unwrap(), codes.pop().unwrap()),
+                Some(0xb7) => Instruction::Invokespecial(codes.pop().unwrap(), codes.pop().unwrap()),
+                Some(_) => unimplemented!(),
+                None => panic!(),
+            };
+            instructions.push(inst);
+        }
+        instructions
+    }
+}
+
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {

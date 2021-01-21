@@ -74,27 +74,8 @@ impl CodeAttribute {
                 Err(err) => Err(err),
             })?;
 
-        let mut instructions: Vec<Instruction> = vec![];
         code.reverse();
-        loop {
-            if code.is_empty() {
-                break;
-            }
-            let inst = match code.pop() {
-                Some(0x08) => Instruction::Iconst5,
-                Some(0x12) => Instruction::Ldc(code.pop().unwrap()),
-                Some(0x1b) => Instruction::Iload1,
-                Some(0x2a) => Instruction::Aload0,
-                Some(0x3c) => Instruction::Istore1,
-                Some(0xb1) => Instruction::Return,
-                Some(0xb2) => Instruction::GetStatic(code.pop().unwrap(), code.pop().unwrap()),
-                Some(0xb6) => Instruction::InvokeVirtual(code.pop().unwrap(), code.pop().unwrap()),
-                Some(0xb7) => Instruction::Invokespecial(code.pop().unwrap(), code.pop().unwrap()),
-                Some(_) => unimplemented!(),
-                None => panic!(),
-            };
-            instructions.push(inst);
-        }
+        let instructions = Instruction::from_codes(code);
 
         let exception_table_length = rdr.read_u16::<BigEndian>()?;
         let (exception_table, mut rdr) =
