@@ -83,6 +83,11 @@ impl VM {
     fn exec_per_inst(&mut self, inst: &Instruction) -> Result<(), String> {
         use ConstantPoolInfo::*;
         match inst {
+            Instruction::Iconst3 => {
+                let mut frame = self.get_current_mut_frame();
+                frame.operand_stack.push(Item::Int(3));
+                frame.pc += 1;
+            }
             Instruction::Iconst5 => {
                 let mut frame = self.get_current_mut_frame();
                 frame.operand_stack.push(Item::Int(5));
@@ -91,6 +96,15 @@ impl VM {
             Instruction::Iload1 => {
                 let mut frame = self.get_current_mut_frame();
                 if let Some(val) = frame.local_variable.get(&1) {
+                    frame.operand_stack.push(*val);
+                } else {
+                    return Err("Variable is not set to avalue".into());
+                }
+                frame.pc += 1;
+            }
+            Instruction::Iload2 => {
+                let mut frame = self.get_current_mut_frame();
+                if let Some(val) = frame.local_variable.get(&2) {
                     frame.operand_stack.push(*val);
                 } else {
                     return Err("Variable is not set to avalue".into());
@@ -108,6 +122,21 @@ impl VM {
                 let val = frame.operand_stack.pop().unwrap();
                 frame.local_variable.insert(1, val);
                 frame.pc += 1;
+            }
+            Instruction::Istore2 => {
+                let mut frame = self.get_current_mut_frame();
+                let val = frame.operand_stack.pop().unwrap();
+                frame.local_variable.insert(2, val);
+                frame.pc += 1;
+            }
+            Instruction::Iadd => {
+                let frame = self.get_current_mut_frame();
+                if let (Some(Item::Int(a)), Some(Item::Int(b))) = (frame.operand_stack.pop(), frame.operand_stack.pop())
+                {
+                    frame.operand_stack.push(Item::Int(a + b))
+                } else {
+                    panic!("Type Error");
+                }
             }
             Instruction::Invokespecial(_, _) => self.get_current_mut_frame().pc += 3,
             Instruction::InvokeVirtual(_, method_index) => {
