@@ -2,6 +2,7 @@ use std::fmt;
 
 #[derive(PartialEq, Clone)]
 pub enum Instruction {
+    Iconst3,
     Iconst5,
     Ldc(u8),
     Iload1,
@@ -21,6 +22,7 @@ impl Instruction {
                 break;
             }
             let inst = match codes.pop() {
+                Some(0x06) => Instruction::Iconst3,
                 Some(0x08) => Instruction::Iconst5,
                 Some(0x12) => Instruction::Ldc(codes.pop().unwrap()),
                 Some(0x1b) => Instruction::Iload1,
@@ -30,7 +32,7 @@ impl Instruction {
                 Some(0xb2) => Instruction::GetStatic(codes.pop().unwrap(), codes.pop().unwrap()),
                 Some(0xb6) => Instruction::InvokeVirtual(codes.pop().unwrap(), codes.pop().unwrap()),
                 Some(0xb7) => Instruction::Invokespecial(codes.pop().unwrap(), codes.pop().unwrap()),
-                Some(_) => unimplemented!(),
+                Some(code) => unimplemented!("code {:x}", code),
                 None => panic!(),
             };
             instructions.push(inst);
@@ -42,6 +44,7 @@ impl Instruction {
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
+            Self::Iconst3 => write!(f, "Iconst3")?,
             Self::Iconst5 => write!(f, "Iconst5")?,
             Self::Ldc(arg) => write!(f, "Ldc({})", arg)?,
             Self::Iload1 => write!(f, "Iload1")?,
