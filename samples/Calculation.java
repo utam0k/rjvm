@@ -3,5 +3,6 @@ class Calculation {
         int i = 5;
         int j = 3;
         System.out.println(i + j);
+        System.out.println(i - j);
     }
 }

@@ -131,9 +131,20 @@ impl VM {
             }
             Instruction::Iadd => {
                 let frame = self.get_current_mut_frame();
-                if let (Some(Item::Int(a)), Some(Item::Int(b))) = (frame.operand_stack.pop(), frame.operand_stack.pop())
+                if let (Some(Item::Int(v2)), Some(Item::Int(v1))) =
+                    (frame.operand_stack.pop(), frame.operand_stack.pop())
                 {
-                    frame.operand_stack.push(Item::Int(a + b))
+                    frame.operand_stack.push(Item::Int(v1 + v2))
+                } else {
+                    panic!("Type Error");
+                }
+            }
+            Instruction::Isub => {
+                let frame = self.get_current_mut_frame();
+                if let (Some(Item::Int(v2)), Some(Item::Int(v1))) =
+                    (frame.operand_stack.pop(), frame.operand_stack.pop())
+                {
+                    frame.operand_stack.push(Item::Int(v1 - v2))
                 } else {
                     panic!("Type Error");
                 }
